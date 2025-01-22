@@ -2,6 +2,7 @@
  * Copyright (c) 2016 Cadence Design Systems, Inc.
  * Copyright (c) 2017 Intel Corporation
  * Copyright (c) 2024 Espressif Systems (Shanghai) Co., Ltd.
+ * Copyright (c) 2025 Proton Camera Innovations GmbH
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -13,16 +14,11 @@
 #include "memory.h"
 
 /* User available SRAM memory segments */
-procpu_iram_end = USER_IRAM_END - APPCPU_SRAM_SIZE;
-procpu_iram_org = SRAM0_IRAM_START + SRAM0_CACHE_SIZE;
-procpu_iram_len = procpu_iram_end - procpu_iram_org;
+procpu_iram_org = PROCPU_IRAM_START;
+procpu_iram_len = PROCPU_IRAM_SIZE;
 
-procpu_dram_end = SRAM2_DRAM_END;
-procpu_dram_org = SRAM2_DRAM_USER_START + CONFIG_ESP32_BT_RESERVE_DRAM;
-procpu_dram_len = SRAM2_DRAM_USER_SIZE - CONFIG_ESP32_BT_RESERVE_DRAM;
-
-user_dram_2_seg_org = SRAM1_DRAM_USER_START;
-user_dram_2_seg_len = SRAM1_USER_SIZE;
+procpu_dram_org = PROCPU_DRAM_START;
+procpu_dram_len = PROCPU_DRAM_SIZE;
 
 /* Aliases */
 #define FLASH_CODE_REGION   irom0_0_seg
@@ -55,11 +51,11 @@ MEMORY
 #ifdef CONFIG_BOOTLOADER_MCUBOOT
   mcuboot_hdr (R): org = 0x0,  len = 0x20
   metadata (R):    org = 0x20, len = 0x60
-  FLASH (R):       org = 0x80, len = FLASH_SIZE - 0x80
+  FLASH (R):       org = FLASH_CODE_START, len = FLASH_CODE_SIZE - 0x80
 #else
   /* Make safety margin in the FLASH memory size so the
    * (esp_img_header + (n*esp_seg_headers)) would fit */
-  FLASH (R):       org = 0x0,  len = FLASH_SIZE - 0x100
+  FLASH (R):       org = FLASH_CODE_START,  len = FLASH_CODE_SIZE - 0x100
 #endif /* CONFIG_BOOTLOADER_MCUBOOT */
 
   iram0_0_seg(RX): org = procpu_iram_org, len = procpu_iram_len
@@ -100,7 +96,10 @@ _rom_store_table = 0;
 PROVIDE(_memmap_vecbase_reset = 0x40000450);
 PROVIDE(_memmap_reset_vector = 0x40000400);
 
-_heap_sentry = SRAM2_DRAM_END;
+/* Heap which can be used by the ESP heap allocator */
+_heap_start = HEAP_START;
+_heap_end = HEAP_START + HEAP_SIZE;
+_heap_sentry = _heap_end;
 
 SECTIONS
 {

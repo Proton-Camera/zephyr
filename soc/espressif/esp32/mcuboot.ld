@@ -22,12 +22,12 @@
 
 MEMORY
 {
-  iram_loader_seg (RWX) : org = BOOTLOADER_IRAM_LOADER_SEG_START,
-                          len = BOOTLOADER_IRAM_LOADER_SEG_LEN
-  iram_seg        (RWX) : org = BOOTLOADER_IRAM_SEG_START,
-                          len = BOOTLOADER_IRAM_SEG_LEN
-  dram_seg        (RW)  : org = BOOTLOADER_DRAM_SEG_START,
-                          len = BOOTLOADER_DRAM_SEG_LEN
+  iram_loader_seg (RWX) : org = BOOTLOADER_IRAM_LOADER_START,
+                          len = BOOTLOADER_IRAM_LOADER_SIZE
+  iram_seg        (RWX) : org = BOOTLOADER_IRAM_START,
+                          len = BOOTLOADER_IRAM_SIZE
+  dram_seg        (RW)  : org = BOOTLOADER_DRAM_START,
+                          len = BOOTLOADER_DRAM_SIZE
 
 #ifdef CONFIG_GEN_ISR_TABLES
   IDT_LIST(RW): org = 0x3ebfe010, len = 0x2000
@@ -55,6 +55,7 @@ SECTIONS
     *libzephyr.a:cpu.*(.literal .text .literal.* .text.*)
     *libzephyr.a:mmu_hal.*(.literal .text .literal.* .text.*)
     *libzephyr.a:flash_map.*(.literal .text .literal.* .text.*)
+    *libzephyr.a:bootloader_flash.*(.literal .text .literal.* .text.*)
     *libzephyr.a:esp_rom_spiflash.*(.literal .text .literal.* .text.*)
 
     *libzephyr.a:heap.*(.literal .text .literal.* .text.*)
@@ -64,8 +65,12 @@ SECTIONS
     *libkernel.a:device.*(.literal .text .literal.* .text.*)
     *libkernel.a:timeout.*(.literal .text .literal.* .text.*)
 
+    /* FIXME: The ESP Loader library is now available twice, once in the
+     * MCUboot module (esp_loader) and once in the ESP HAL (esp_image_loader)
+     * for now keep them both here until one of them gets deprecated/removed.
+     */
     *libzephyr.a:esp_loader.*(.literal .text .literal.* .text.*)
-    *libzephyr.a:mmu_hal.*(.literal .text .literal.* .text.*)
+    *libzephyr.a:esp_image_loader.*(.literal .text .literal.* .text.*)
 
     *(.literal.esp_intr_disable .literal.esp_intr_disable.* .text.esp_intr_disable .text.esp_intr_disable.*)
     *(.literal.default_intr_handler .text.default_intr_handler .iram1.*.default_intr_handler)

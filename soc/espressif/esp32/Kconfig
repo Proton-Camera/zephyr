@@ -1,4 +1,5 @@
 # Copyright (c) 2023 Espressif Systems (Shanghai) Co., Ltd.
+# Copyright (c) 2025 Proton Camera Innovations GmbH
 # SPDX-License-Identifier: Apache-2.0
 
 config SOC_SERIES_ESP32
@@ -15,21 +16,43 @@ config SOC_SERIES_ESP32
 
 if SOC_SERIES_ESP32
 
+config ESP32_MCUBOOT_IRAM
+	hex "Amount of non-reclaimable IRAM which can be used by MCUboot"
+	range 0x0 0x8000
+	default 0x2000
+	depends on MCUBOOT || BOOTLOADER_MCUBOOT
+	help
+	  This value can be optimized to reduce the amount of memory used up
+	  by MCUboot which can not be used by the application. If the value
+	  is too low a linker warning will be shown.
+
+	  The value may have to be increased depending on the features enabled
+	  for MCUboot (e.g. logging). The maximum value is 32kB.
+
 config ESP32_BT_RESERVE_DRAM
 	hex "Bluetooth controller reserved RAM region"
 	default 0xdb5c if BT
 	default 0
 
-config ESP_HEAP_MEM_POOL_REGION_1_SIZE
-	int "Internal DRAM region 1 mempool size"
-	default 0 if MCUBOOT
-	default 1024 if SOC_ESP32_PROCPU
-	default 49152
+config ESP32_SRAM1_HEAP_SIZE
+	hex "Amount of SRAM1 memory which is used as heap for the ESP heap allocator"
+	range 0x0 0x18000
+	default 0x10000 if WIFI_ESP32 || BT_ESP32
+	default 0
+
 	help
-	  ESP32 has two banks of size 192K and 128K which can be used
-	  as DRAM, system heap allocates area from region 0.
-	  This configuration can be used to add memory from region 1
-	  to heap and can be allocated using k_malloc.
+	  ESP32 has two banks of size 200kB (SRAM2) and 128kB (SRAM1) which can
+	  be used as DRAM. SRAM2 (minus some shared memory) is completely used for
+	  DRAM.
+	  SRAM1 can be split between IRAM and HEAP which can be allocated by the ESP
+	  heap allocator for WiFi and Bluetooth operation. The maximum memory is
+	  96kB, the rest is reserved for ROM functions.
+	  The remaining SRAM1 memory which is not used for the heap is added to the
+	  IRAM.
+	  By setting this config to 0 the ESP heap will be placed in the normal DRAM
+	  section, thus reduce the available DRAM for the application. This should
+	  only be done if the additional IRAM is needed and there is enough DRAM
+	  available in SRAM2.
 
 config ESP32_DEEP_SLEEP_WAKEUP_DELAY
 	int "Extra delay in deep sleep wake stub (in us)"

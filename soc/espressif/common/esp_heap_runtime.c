@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2024 Espressif Systems (Shanghai) Co., Ltd.
+ * Copyright (c) 2025 Proton Camera Innovations GmbH
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -17,11 +18,19 @@
 #define TAG "heap_runtime"
 
 /* ESP dynamic pool heap */
+#if (CONFIG_ESP32_SRAM1_HEAP_SIZE > 0)
+extern unsigned int _heap_start;
+extern unsigned int _heap_end;
+static void *esp_heap_runtime_init_mem = &_heap_start;
+
+#define ESP_HEAP_RUNTIME_MAX_SIZE ((uintptr_t)&_heap_end - (uintptr_t)&_heap_start)
+#else
 extern unsigned int z_mapped_end;
 extern unsigned int _heap_sentry;
 static void *esp_heap_runtime_init_mem = &z_mapped_end;
 
 #define ESP_HEAP_RUNTIME_MAX_SIZE ((uintptr_t)&_heap_sentry - (uintptr_t)&z_mapped_end)
+#endif
 
 static struct k_heap esp_heap_runtime;
 
