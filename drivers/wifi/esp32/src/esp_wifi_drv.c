@@ -40,7 +40,7 @@ static struct esp32_wifi_runtime esp32_data;
 
 #if defined(CONFIG_ESP32_WIFI_AP_STA_MODE)
 static struct net_if *esp32_wifi_iface_ap;
-static struct esp32_wifi_runtime esp32_ap_sta_data;
+static struct esp32_wifi_runtime esp32_ap_data;
 #endif
 
 enum esp32_state_flag {
@@ -197,8 +197,8 @@ static esp_err_t wifi_esp32_ap_iface_rx(void *buffer, uint16_t len, void *eb)
 	}
 
 #if defined(CONFIG_NET_STATISTICS_WIFI)
-	esp32_ap_sta_data.stats.bytes.received += len;
-	esp32_ap_sta_data.stats.pkts.rx++;
+	esp32_ap_data.stats.bytes.received += len;
+	esp32_ap_data.stats.pkts.rx++;
 #endif
 
 	esp_wifi_internal_free_rx_buffer(eb);
@@ -209,7 +209,7 @@ pkt_unref:
 	net_pkt_unref(pkt);
 
 #if defined(CONFIG_NET_STATISTICS_WIFI)
-	esp32_ap_sta_data.stats.errors.rx++;
+	esp32_ap_data.stats.errors.rx++;
 #endif
 	return -EIO;
 }
@@ -288,7 +288,9 @@ static void scan_done_handler(void)
 
 out:
 	/* report end of scan event */
-	esp32_data.scan_cb(esp32_wifi_iface, 0, NULL);
+	if (esp32_data.scan_cb) {
+		esp32_data.scan_cb(esp32_wifi_iface, 0, NULL);
+	}
 	esp32_data.scan_cb = NULL;
 }
 
@@ -418,7 +420,7 @@ void esp_wifi_event_handler(const char *event_base, int32_t event_id, void *even
 {
 #if defined(CONFIG_ESP32_WIFI_AP_STA_MODE)
 	struct net_if *iface_ap = esp32_wifi_iface_ap;
-	struct esp32_wifi_runtime *ap_data = &esp32_ap_sta_data;
+	struct esp32_wifi_runtime *ap_data = &esp32_ap_data;
 #else
 	struct net_if *iface_ap = esp32_wifi_iface;
 	struct esp32_wifi_runtime *ap_data = &esp32_data;
@@ -842,7 +844,7 @@ static void esp32_wifi_init(struct net_if *iface)
 #if defined(CONFIG_ESP32_WIFI_AP_STA_MODE)
 	struct wifi_nm_instance *nm = wifi_nm_get_instance("esp32_wifi_nm");
 
-	if (!esp32_wifi_iface_ap) {
+	if (dev_data == &esp32_ap_data) {
 		esp32_wifi_iface_ap = iface;
 		dev_data->state = ESP32_AP_STOPPED;
 
@@ -858,14 +860,12 @@ static void esp32_wifi_init(struct net_if *iface)
 		wifi_nm_register_mgd_type_iface(nm, WIFI_TYPE_STA, esp32_wifi_iface);
 	}
 #else
-
 	esp32_wifi_iface = iface;
 	dev_data->state = ESP32_STA_STOPPED;
 
 	/* Start interface when we are actually connected with Wi-Fi network */
 	esp_read_mac(dev_data->mac_addr, ESP_MAC_WIFI_STA);
 	esp_wifi_internal_reg_rxcb(ESP_IF_WIFI_STA, eth_esp32_rx);
-
 #endif
 
 	/* Assign link local address. */
@@ -949,7 +949,7 @@ NET_DEVICE_DT_INST_DEFINE(0,
 #if defined(CONFIG_ESP32_WIFI_AP_STA_MODE)
 NET_DEVICE_DT_INST_DEFINE(1,
 		NULL, NULL,
-		&esp32_ap_sta_data, NULL, CONFIG_WIFI_INIT_PRIORITY,
+		&esp32_ap_data, NULL, CONFIG_WIFI_INIT_PRIORITY,
 		&esp32_api, ETHERNET_L2,
 		NET_L2_GET_CTX_TYPE(ETHERNET_L2), NET_ETH_MTU);
 
