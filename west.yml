@@ -23,6 +23,8 @@ manifest:
       url-base: https://github.com/zephyrproject-rtos
     - name: babblesim
       url-base: https://github.com/BabbleSim
+    - name: proton
+      url-base: https://github.com/Proton-Camera
 
   group-filter: [-babblesim, -optional]
 
@@ -162,7 +164,9 @@ manifest:
       groups:
         - hal
     - name: hal_espressif
-      revision: c0b38024651cb917d7b6e31b50adf1202e0a10d6
+      remote: proton
+      repo-path: hal_espressif
+      revision: 22d19990eda072dea8b575d1a0ab6242b83fa67d
       path: modules/hal/espressif
       west-commands: west/west-commands.yml
       groups:
