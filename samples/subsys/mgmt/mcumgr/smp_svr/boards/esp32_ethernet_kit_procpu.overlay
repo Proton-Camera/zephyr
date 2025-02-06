@@ -1,0 +1,17 @@
+/* Enable Ethernet */
+&eth {
+	status = "okay";
+};
+
+&phy {
+	status = "okay";
+};
+
+&mdio {
+	status = "okay";
+};
+
+/* We do not want to use the PSRAM */
+&psram0 {
+	status = "disabled";
+};
